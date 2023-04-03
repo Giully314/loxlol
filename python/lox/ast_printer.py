@@ -27,6 +27,11 @@ class ASTPrinter:
         return str(e.value)
     
 
+    @visitor.visitor(expr.Conditional)
+    def visit(self, e: expr.Conditional):
+        return f"if {self.visit(e.condition)} then {self.visit(e.then_branch)} else {self.visit(e.else_branch)}"
+    
+
     def __parenthesize(self, name: str, *exprs: expr.Expression) -> str:
         s = [f"({name}"]
         for e in exprs:

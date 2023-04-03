@@ -28,3 +28,11 @@ class Binary(Expression):
     right: Expression
 
 
+
+@dataclass(frozen=True)
+class Conditional(Expression):
+    condition: Expression
+    then_branch: Expression
+    else_branch: Expression
+
+

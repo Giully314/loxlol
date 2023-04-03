@@ -70,21 +70,21 @@ class Scanner:
             
             # comparison
             case '!':
-                self.__add_token(TokenType.BANG_EQUAL if self._match_char('=') else TokenType.BANG)
+                self.__add_token(TokenType.BANG_EQUAL if self.__match_char('=') else TokenType.BANG)
             case '=':
-                self.__add_token(TokenType.EQUAL_EQUAL if self._match_char('=') else TokenType.EQUAL)
+                self.__add_token(TokenType.EQUAL_EQUAL if self.__match_char('=') else TokenType.EQUAL)
             case '<':
-                self.__add_token(TokenType.LESS_EQUAL if self._match_char('=') else TokenType.LESS)
+                self.__add_token(TokenType.LESS_EQUAL if self.__match_char('=') else TokenType.LESS)
             case '>':
-                self.__add_token(TokenType.GREATER_EQUAL if self._match_char('=') else TokenType.GREATER)
+                self.__add_token(TokenType.GREATER_EQUAL if self.__match_char('=') else TokenType.GREATER)
             
 
             case '/': 
-                if self._match_char('/'): # check if this is the division operator or the start of a comment
+                if self.__match_char('/'): # check if this is the division operator or the start of a comment
                 # A comment goes until the end of the line.
                     while self.__peek() != '\n' and not self.__is_at_end(): 
                         self.__advance()
-                elif self._match_char('*'): # not sure if it is correct.
+                elif self.__match_char('*'): # not sure if it is correct.
                     # /* bla bla bla */
                     good_comment = False
                     while not self.__is_at_end():
@@ -102,20 +102,23 @@ class Scanner:
                     
                     if not good_comment and self.__is_at_end():
                         error_reporter.error(self.line, "Missing */ for closing the comment.")
-
-                     
-
                 else:
                     self.__add_token(TokenType.SLASH)
 
-        
+            # Ternary operator
+            case '?':
+                self.__ternary()
+
+            case ':':
+                ...
+
             # whitespaces are ignored.
             case ' ':
-                pass
+                ...
             case '\r':
-                pass 
+                ... 
             case '\t':
-                pass 
+                ... 
 
             case '\n':
                 self.line += 1
@@ -127,13 +130,25 @@ class Scanner:
             case "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9":
                 self.__number()
 
-            # default case is to check if a the current char is a letter, number or if it not recognized
+            # default case is to check if a the current char is a letter or if it not recognized
             case _:
                 if c.isalpha():
                     self.__identifier() 
                 else:
                     error_reporter.error(self.line, f"Unexpected character {c}.")
 
+    def __ternary(self):
+        self.__add_token(TokenType.QUESTION)
+        self.start = self.current
+        while not self.__match_char(":"):
+            if self.__is_at_end():
+                error_reporter.error(self.line, f"Expected ':' in ternary operator '?:' at {self.current}")
+                break
+            self.scan_token()
+            self.start = self.current
+        self.start = self.current
+        
+        
 
     def __is_alpha_numeric(self, c: str):
         return c.isalpha() or c.isnumeric()
@@ -191,7 +206,7 @@ class Scanner:
             return "\0"
         return self.source_code[self.current]
 
-    def _match_char(self, expected_char: str) -> bool:
+    def __match_char(self, expected_char: str) -> bool:
         if self.__is_at_end():
             return False
         if self.source_code[self.current] != expected_char:
