@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field 
 from loxtoken import Token, TokenType
+from loxerror import LoxRuntimeError
 
 @dataclass(init=False)
 class ErrorReporter:
     had_error: bool = False
+    had_runtime_error: bool = False
     
     def report(self, line: int, where: str, msg: str):
         print(f"[line {line}] Error {where}: {msg}")
@@ -19,6 +21,9 @@ class ErrorReporter:
             self.report(token.line, " at '" + token.lexeme + "'", msg)
         self.had_error = True
 
+    def runtime_error(self, err: LoxRuntimeError):
+        print(f"{err}\n[line {err.token.line}]")
+        self.had_runtime_error = True
 
 
 # Note: global objects usually are bad (specially if mutable and accessed by different parts of the program)
