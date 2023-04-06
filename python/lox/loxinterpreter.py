@@ -3,18 +3,22 @@ import expression as expr
 import visitor
 from error_reporter import error_reporter
 from loxerror import LoxRuntimeError
+import statement as stmt
+from dataclasses import dataclass, field
+from environment import Environment
 
 
+@dataclass
 class Interpreter:
+    env: Environment = field(default_factory=Environment, init=False)
 
-
-    def interpret(self, e: expr.Expression) -> str:
+    def interpret(self, statements: list[stmt.Statement]) -> str:
         """
         Can raise a LoxRuntimeError.
         """
         try:
-            result = self.visit(e)
-            print(self.__stringify(result))
+            for statement in statements:
+                self.visit(statement)
         except LoxRuntimeError as err:
             error_reporter.runtime_error(err)
 
@@ -22,6 +26,54 @@ class Interpreter:
         if obj is None:
             return "nil"
         return str(obj)
+    
+
+    def __execute_block(self, s: stmt.Block, env: Environment):
+        # Save the current environment for later, after the block finish its execution.
+        previous_env = self.env
+
+        try:
+            self.env = env
+
+            for statement in s.statements:
+                self.visit(statement)
+        finally:
+            self.env = previous_env
+
+
+    @visitor.visitor(stmt.Block)
+    def visit(self, s: stmt.Block):
+        self.__execute_block(s, Environment(self.env))
+
+
+    @visitor.visitor(stmt.Var)
+    def visit(self, s: stmt.Var):
+        obj = None
+        if s.initializer is not None:
+            obj = self.visit(s.initializer)
+        self.env.define(s.name, obj)
+    
+
+    @visitor.visitor(stmt.StmtExpression)
+    def visit(self, s: stmt.StmtExpression):
+        self.visit(s.expr)
+
+
+    @visitor.visitor(stmt.Print)
+    def visit(self, s: stmt.Print):
+        obj = self.visit(s.expr)
+        print(self.__stringify(obj))
+
+
+    @visitor.visitor(expr.Assign)
+    def visit(self, s: expr.Assign):
+        value = self.visit(s.value)
+        self.env.assign(s.name, value)
+        return value
+
+    @visitor.visitor(expr.Variable)
+    def visit(self, e: expr.Variable):
+        return self.env[e.name]
 
 
     @visitor.visitor(expr.Literal)

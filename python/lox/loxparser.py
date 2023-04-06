@@ -1,24 +1,15 @@
 from dataclasses import dataclass, field 
 from loxtoken import Token, TokenType
 import expression as expr
+import statement as stmt
 from typing import Union
 import error_reporter as err
-
-
 
 
 @dataclass
 class Parser:
     """
-    A recursive descent parser. 
-    The grammar on which operates:
-    expression -> equality ;
-    equality   -> comparison ( ("!=" | "==") comparison)* ;
-    comparison -> term ( (">" | ">=" | "<" | "<=") term)* ;
-    term       -> factor ( ("-" | "+") factor)* ;
-    factor     -> unary ( ("*" | "/") unary)* ;
-    unary      -> ("!" | "-") unary | primary ;
-    primary    -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;   
+    A recursive descent parser.
     """
 
     tokens: list[Token]
@@ -32,17 +23,88 @@ class Parser:
         ...
 
 
-    def parse(self) -> expr.Expression:
+    def parse(self) -> list[stmt.Statement]:
+        """
+        This method corresponds to "program" in the grammar.
+        """
+        statements = []
+        while not self.__is_at_end():
+            statements.append(self.__declaration())
+
+        return statements
+
+    def __declaration(self) -> stmt.Statement:
         try:
-            return self.__expression()
-            # return self.__expression()
-        except self.ParseError as e:
+            if self.__match(TokenType.VAR):
+                return self.__var_declaration()
+            return self.__statement()
+        except Parser.ParseError as e:
+            self.__synchronize()
             return None
+        
+    def __var_declaration(self) -> stmt.Statement:
+        name = self.__consume(TokenType.IDENTIFIER, "Expect a variable name.")
+        initializer: expr.Expression = None
+        
+        if self.__match(TokenType.EQUAL):
+            initializer = self.__expression()
+        
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+        return stmt.Var(name, initializer)
+
+    def __statement(self) -> Union[stmt.StmtExpression, stmt.Print]:
+        if self.__match(TokenType.PRINT):
+            return self.__print_stmt()
+        
+        if self.__match(TokenType.LEFT_BRACE):
+            return stmt.Block(self.__block())
+        
+        return self.__expression_stmt()
+    
+
+    def __block(self) -> list[stmt.Statement]:
+        statements: list[stmt.Statement] = []
+
+        while not (self.__is_at_end() or self.__check(TokenType.RIGHT_BRACE)):
+            statements.append(self.__declaration())
+
+        self.__consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
+
+        return statements
+
+
+    def __print_stmt(self) -> stmt.Print:
+        expression = self.__expression()
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+        return stmt.Print(expression)
+    
+    
+    def __expression_stmt(self) -> stmt.StmtExpression:
+        expression = self.__expression()
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+        return stmt.StmtExpression(expression)
 
 
     def __expression(self) -> expr.Expression:
-        return self.__comma()
+        return self.__assignment()
     
+
+    def __assignment(self) -> expr.Expression:
+        expression = self.__comma()
+
+        if self.__match(TokenType.EQUAL):
+            equals = self.__previous()
+            value = self.__assignment()
+
+            if isinstance(expression, expr.Variable):
+                name = expression.name
+                return expr.Assign(name, value)
+            
+            # if is not a valid assignment report the error. No need to raise it because the parser 
+            # isn't in a confused state so there isn't the necessity to synchronize.
+            err.error_reporter.error_token(equals, "Invalid assignment target.")
+
+        return expression
         
     # Exercise 6.1
     def __comma(self) -> expr.Expression:
@@ -55,7 +117,9 @@ class Parser:
         
         return expression 
     
-    # TODO: not sure if it is correct.
+    # Exercise 6.2
+    # TODO: not sure if it is correct for multiple nested cases.
+    # For single expr ? value1 : value2; it works.
     def __ternary(self) -> expr.Expression:
         expression = self.__equality()
 
@@ -141,6 +205,9 @@ class Parser:
             expression = self.__expression()
             self.__consume(TokenType.COMMA, "Missing comma for multiple expression in the same statement")
             return expression
+        
+        if self.__match(TokenType.IDENTIFIER):
+            return expr.Variable(self.__previous())
         
         # if self.__match(TokenType.QUESTION):
         #     expression = self.__expression()

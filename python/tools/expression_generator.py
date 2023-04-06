@@ -4,6 +4,7 @@ import sys
 import os
 import io
 
+
 def define_ast(output_dir: str, output_file: str, baseclass_name: str, subclasses: list[str]):
     """ 
     subclasses: list of types that inherit from baseclass; 
@@ -12,7 +13,7 @@ def define_ast(output_dir: str, output_file: str, baseclass_name: str, subclasse
     output_file = os.path.join(output_dir, output_file) 
     with open(output_file, "w") as f:
         # import modules and generate base class with the abstract method accept(visitor).
-        f.write("from token import Token\n")
+        f.write("from loxtoken import Token\n")
         f.write("from abc import ABC\n")
         f.write("from dataclasses import dataclass\n\n")
         f.write(f"class {baseclass_name}(ABC):\n    ...\n\n")
@@ -38,8 +39,8 @@ def define_visitors():
 def main():
     args = sys.argv 
 
-    if len(args) != 3:
-        print("Usage: python expression_generator.py output_dir output_file")
+    if len(args) == 1:
+        print("Usage: python expression_generator.py output_dir expr_output_file stmt_output_file")
         return
 
     subclasses = [
@@ -47,9 +48,20 @@ def main():
         "Grouping   $ expr: Expression",
         "Literal    $ value: object",
         "Binary     $ operator: Token, left: Expression, right: Expression",
+        "Variable   $ name: Token",
+        "Assign     $ name: Token, value: Expression",
     ]
 
-    define_ast(args[1], args[2], "Expression", subclasses)
+    stmt_subclasses = [
+        "StmtExpression $ expr: Expression",
+        "Print          $ expr: Expression",
+        "Var            $ name: Token, initializer: Expression",
+        "Block          $ statements: list[Statement]",
+    ]
+
+    # define_ast(args[1], args[2], "Expression", subclasses)
+    define_ast(args[1], args[2], "Statement", stmt_subclasses)
+
 
 if __name__ == "__main__":
     main() 

@@ -1,30 +1,30 @@
 import sys
 from scanner import Scanner
-from ast_printer import ASTPrinter
+# from ast_printer import ASTPrinter
 from loxparser import Parser
 from loxinterpreter import Interpreter
 import error_reporter as err
 
 class Lox:
     def __init__(self):
-        self.ast_printer = ASTPrinter()
+        # self.ast_printer = ASTPrinter()
         self.interpreter = Interpreter()
 
     def run(self, source_code):
         scanner = Scanner(source_code)
         tokens = scanner.scan_tokens()
         parser = Parser(tokens)
-        expression = parser.parse() 
+        statements = parser.parse() 
 
         # TODO: make a better error checking.
         if err.error_reporter.had_error or err.error_reporter.had_runtime_error:
             return
 
-        if expression is None:
-            print("None expression")
-            return
+        # if expression is None:
+        #     print("None expression")
+        #     return
         
-        self.interpreter.interpret(expression)
+        self.interpreter.interpret(statements)
 
         # print(ASTPrinter().visit(expression))
         # for token in tokens:
@@ -33,8 +33,10 @@ class Lox:
         #     # self.ast_printer.visit(token)
 
 
-    def run_file(self):
-        pass
+    def run_file(self, filename: str):
+        with open(filename) as f:
+            source_code = f.read()
+        self.run(source_code)
 
     def run_prompt(self):
         while True:
@@ -49,7 +51,7 @@ def main():
 
     lox = Lox()
 
-    lox.run_prompt()
+    lox.run_file(args[1])
 
 
 if __name__ == "__main__":

@@ -97,7 +97,7 @@ class Scanner:
                         if self.__peek() == "\n":
                             self.line += 1
                         
-                        print(f"{self.__peek()}")
+                        # print(f"{self.__peek()}")
                         self.__advance()
                     
                     if not good_comment and self.__is_at_end():
