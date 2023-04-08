@@ -52,7 +52,10 @@ class Parser:
         self.__consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return stmt.Var(name, initializer)
 
-    def __statement(self) -> Union[stmt.StmtExpression, stmt.Print]:
+    def __statement(self) -> Union[stmt.If, stmt.Print, list[stmt.Statement], stmt.StmtExpression]:
+        if self.__match(TokenType.IF):
+            return self.__if_stmt()
+
         if self.__match(TokenType.PRINT):
             return self.__print_stmt()
         
@@ -61,6 +64,19 @@ class Parser:
         
         return self.__expression_stmt()
     
+
+    def __if_stmt(self) -> stmt.If:
+        self.__consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+        condition = self.__expression()
+        self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        then_branch = self.__statement()
+        else_branch = None
+        if self.__match(TokenType.ELSE):
+            else_branch = self.__statement()
+
+        return stmt.If(condition, then_branch, else_branch)    
+
 
     def __block(self) -> list[stmt.Statement]:
         statements: list[stmt.Statement] = []
@@ -86,11 +102,11 @@ class Parser:
 
 
     def __expression(self) -> expr.Expression:
-        return self.__assignment()
+        return self.__comma()
     
 
     def __assignment(self) -> expr.Expression:
-        expression = self.__comma()
+        expression = self.__ternary()
 
         if self.__match(TokenType.EQUAL):
             equals = self.__previous()
@@ -108,11 +124,11 @@ class Parser:
         
     # Exercise 6.1
     def __comma(self) -> expr.Expression:
-        expression = self.__ternary()
+        expression = self.__assignment()
 
         while self.__match(TokenType.COMMA):
             operator = self.__previous()
-            right = self.__ternary()
+            right = self.__assignment()
             expression = expr.Binary(operator, expression, right)
         
         return expression 
@@ -121,17 +137,36 @@ class Parser:
     # TODO: not sure if it is correct for multiple nested cases.
     # For single expr ? value1 : value2; it works.
     def __ternary(self) -> expr.Expression:
-        expression = self.__equality()
+        expression = self.__logical_or()
 
         while self.__match(TokenType.QUESTION):
             operator = self.__previous()
             condition = expression
-            then_branch = self.__equality()
-            else_branch = self.__equality()
+            then_branch = self.__logical_or()
+            else_branch = self.__logical_or()
             expression = expr.Conditional(condition, then_branch, else_branch)
 
         return expression
 
+    def __logical_or(self) -> expr.Expression:
+        expression = self.__logical_and()
+
+        while self.__match(TokenType.OR):
+            operator = self.__previous()
+            right = self.__logical_and()
+            expression = expr.Logical(operator, expression, right)
+
+        return expression
+
+    def __logical_and(self) -> expr.Expression:
+        expression = self.__equality()
+
+        while self.__match(TokenType.AND):
+            operator = self.__previous()
+            right = self.__equality()
+            expression = expr.Logical(operator, expression, right)
+
+        return expression
 
     def __equality(self) -> Union[expr.Expression, expr.Binary]:
         expression = self.__comparison()

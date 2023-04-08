@@ -44,23 +44,26 @@ def main():
         return
 
     subclasses = [
-        "Unary      $ operator: Token, right: Expression",
-        "Grouping   $ expr: Expression",
-        "Literal    $ value: object",
-        "Binary     $ operator: Token, left: Expression, right: Expression",
-        "Variable   $ name: Token",
-        "Assign     $ name: Token, value: Expression",
+        "Unary       $ operator: Token, right: Expression",
+        "Grouping    $ expr: Expression",
+        "Literal     $ value: object",
+        "Binary      $ operator: Token, left: Expression, right: Expression",
+        "Variable    $ name: Token",
+        "Assign      $ name: Token, value: Expression",
+        "Conditional $ condition: Expression, then_branch: Expression, else_branch: Expression",
+        "Logical     $ operator: Token, left: Expression, right: Expression",
     ]
 
     stmt_subclasses = [
-        "StmtExpression $ expr: Expression",
-        "Print          $ expr: Expression",
-        "Var            $ name: Token, initializer: Expression",
-        "Block          $ statements: list[Statement]",
+        "StmtExpression     $ expr: Expression",
+        "Print              $ expr: Expression",
+        "Var                $ name: Token, initializer: Expression",
+        "Block              $ statements: list[Statement]",
+        "If                 $ condition: Expression, then_branch: Expression, else_branch: Expression"
     ]
 
-    # define_ast(args[1], args[2], "Expression", subclasses)
-    define_ast(args[1], args[2], "Statement", stmt_subclasses)
+    define_ast(args[1], args[2], "Expression", subclasses)
+    define_ast(args[1], args[3], "Statement", stmt_subclasses)
 
 
 if __name__ == "__main__":

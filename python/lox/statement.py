@@ -27,3 +27,10 @@ class Block(Statement):
     statements: list[Statement]
 
 
+@dataclass(frozen=True)
+class If(Statement):
+    condition: Expression
+    then_branch: Expression
+    else_branch: Expression
+
+

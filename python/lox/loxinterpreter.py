@@ -2,11 +2,10 @@ from loxtoken import Token, TokenType
 import expression as expr
 import visitor
 from error_reporter import error_reporter
-from loxerror import LoxRuntimeError
+from loxerror import LoxRuntimeError, LoxNonInitializedVar
 import statement as stmt
 from dataclasses import dataclass, field
 from environment import Environment
-
 
 @dataclass
 class Interpreter:
@@ -48,7 +47,7 @@ class Interpreter:
 
     @visitor.visitor(stmt.Var)
     def visit(self, s: stmt.Var):
-        obj = None
+        obj = LoxNonInitializedVar()
         if s.initializer is not None:
             obj = self.visit(s.initializer)
         self.env.define(s.name, obj)
@@ -65,11 +64,44 @@ class Interpreter:
         print(self.__stringify(obj))
 
 
+    @visitor.visitor(stmt.If)
+    def visit(self, s: stmt.If):
+        if self.__is_truthful(self.visit(s.condition)):
+            self.visit(s.then_branch)
+        elif s.else_branch is not None:
+            self.visit(s.else_branch)
+
+
+    @visitor.visitor(expr.Logical)
+    def visit(self, e: expr.Logical) -> object:
+        left = self.visit(e.left)
+
+        if e.operator.type == TokenType.OR:
+            if self.__is_truthful(left):
+                return left 
+        if e.operator.type == TokenType.AND:
+            if not self.__is_truthful(left):
+                return left
+
+        return self.visit(e.right)
+    
+
     @visitor.visitor(expr.Assign)
-    def visit(self, s: expr.Assign):
-        value = self.visit(s.value)
-        self.env.assign(s.name, value)
+    def visit(self, e: expr.Assign) -> object:
+        value = self.visit(e.value)
+        self.env.assign(e.name, value)
         return value
+
+
+    # TODO: check if the executed branch is an expression, that is, must return a value.
+    # The conditional operator ?: is only supported for expressions and not for statements.
+    @visitor.visitor(expr.Conditional)
+    def visit(self, e: expr.Conditional) -> object:
+        if self.__is_truthful(self.visit(e.condition)):
+            return self.visit(e.then_branch)
+        elif e.else_branch is not None:
+            return self.visit(e.else_branch)
+
 
     @visitor.visitor(expr.Variable)
     def visit(self, e: expr.Variable):
@@ -80,9 +112,11 @@ class Interpreter:
     def visit(self, e: expr.Literal) -> object:
         return e.value
     
+
     @visitor.visitor(expr.Grouping)
     def visit(self, e: expr.Grouping) -> object:
         return self.visit(e.expr)
+    
     
     @visitor.visitor(expr.Unary)
     def visit(self, e: expr.Unary) -> object:
@@ -144,6 +178,7 @@ class Interpreter:
     
         # This is unreachable.
         return None
+    
     
     def __is_truthful(self, obj: object) -> bool:
         if obj is None:

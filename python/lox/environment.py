@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from loxerror import LoxRuntimeError
+from loxerror import LoxRuntimeError, LoxNonInitializedVar
 from loxtoken import Token 
+
 
 @dataclass
 class Environment:
@@ -19,16 +20,17 @@ class Environment:
         
         if self.outer_env is not None:
             self.outer_env.assign(name, value)
+            return
 
         raise LoxRuntimeError(f"Undefined variable '{name.lexeme}'.", name)
 
     def __getitem__(self, name: Token) -> object:
-        print(f"Hello {self.variables}      {name.lexeme}")
         if name.lexeme in self.variables:
+            if isinstance(self.variables[name.lexeme], LoxNonInitializedVar):
+                raise LoxRuntimeError(f"{name.lexeme} is not initialized.", name)
             return self.variables[name.lexeme]
         
         if self.outer_env is not None:
-            print("inside inner block")
             return self.outer_env[name]
 
         raise LoxRuntimeError(f"Undefined variable '{name.lexeme}'.", name)

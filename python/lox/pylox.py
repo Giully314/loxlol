@@ -4,10 +4,10 @@ from scanner import Scanner
 from loxparser import Parser
 from loxinterpreter import Interpreter
 import error_reporter as err
+import statement as stmt
 
 class Lox:
     def __init__(self):
-        # self.ast_printer = ASTPrinter()
         self.interpreter = Interpreter()
 
     def run(self, source_code):
@@ -26,12 +26,6 @@ class Lox:
         
         self.interpreter.interpret(statements)
 
-        # print(ASTPrinter().visit(expression))
-        # for token in tokens:
-        #     # print(token)
-        #     print(f"{token.type.name}")
-        #     # self.ast_printer.visit(token)
-
 
     def run_file(self, filename: str):
         with open(filename) as f:
@@ -44,14 +38,31 @@ class Lox:
 
             if s == "exit()":
                 break
-            self.run(s)
+            
+            scanner = Scanner(s)
+            tokens = scanner.scan_tokens()
+            parser = Parser(tokens)
+            statements = parser.parse()
+            
+            modified_statements = []
+            for statement in statements:
+                if isinstance(statement, stmt.StmtExpression):
+                    modified_statements.append(stmt.Print(statement.expr))
+                else:
+                    modified_statements.append(statement)
+
+            self.interpreter.interpret(modified_statements)
+        
 
 def main():
     args = sys.argv
 
     lox = Lox()
 
-    lox.run_file(args[1])
+    if len(args) == 1:
+        lox.run_prompt()
+    else:
+        lox.run_file(args[1])
 
 
 if __name__ == "__main__":

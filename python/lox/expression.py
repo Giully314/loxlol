@@ -39,3 +39,15 @@ class Assign(Expression):
     value: Expression
 
 
+@dataclass(frozen=True)
+class Conditional(Expression):
+    condition: Expression
+    then_branch: Expression
+    else_branch: Expression
+
+
+@dataclass(frozen=True)
+class Logical(Expression):
+    operator: Token
+    left: Expression
+    right: Expression
