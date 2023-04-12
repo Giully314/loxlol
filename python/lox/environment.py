@@ -8,7 +8,9 @@ from loxtoken import Token
 class Environment:
     outer_env: Environment = None
     variables: dict[str, object] = field(default_factory=dict, init=False)
-
+    
+    def define_name(self, name: str, value: object):
+        self.variables[name] = value
 
     def define(self, name: Token, value: object):
         self.variables[name.lexeme] = value

@@ -51,3 +51,10 @@ class Logical(Expression):
     operator: Token
     left: Expression
     right: Expression
+
+
+@dataclass(frozen=True)
+class Call(Expression):
+    callee: Expression
+    paren: Token
+    arguments: list[Expression]

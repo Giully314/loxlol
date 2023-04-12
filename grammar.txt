@@ -1,15 +1,26 @@
-program    -> declaration* EOF ;
+program      -> declaration* EOF ;
 
-declaration -> variable_decl | statement ;
+declaration  -> variable_decl | statement | fun_decl ;
+
+fun_decl     -> "fun" function ;
+function     -> IDENTIFIER "(" parameters? ")" block ;
+parameters   -> IDENTIFIER ( "," IDENTIFIER )* ;
 
 variable_decl -> "var" IDENTIFIER ( "=" expression )? ";" ;
 
-statement    -> expr_stmt | print_stmt | block | if_stmt ;
+statement    -> expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | return_stmt;
 block        -> "{" declaration* "}" ;
 expr_stmt    -> expression ";" ;
 print_stmt   -> "print" expression ";" ;
 if_stmt      -> "if" "(" expression ")" statement ( "else" statement )? ;
-  
+while_stmt   -> "while" "(" expression ")" statement ; 
+for_stmt     -> "for" "(" (variable_decl | expr_stmt | ";" ) 
+                            expression? ";"
+                            expression? ";" ")"
+                            statement ;
+return_stmt  -> "return" expression? ";" ;
+
+
 expression   -> comma ;
 comma        -> ternary ( "," ternary )* ;
 assignment   -> IDENTIFIER "=" assignment | ternary ;
@@ -20,5 +31,7 @@ equality     -> comparison ( ("!=" | "==") comparison )* ;
 comparison   -> term ( (">" | ">=" | "<" | "<=") term )* ;
 term         -> factor ( ("-" | "+") factor )* ;
 factor       -> unary ( ("*" | "/") unary )* ;
-unary        -> ("!" | "-") unary | primary ;
+unary        -> ("!" | "-") unary | call ;
+call         -> primary ( "(" arguments? ")" )? ;
+arguments    -> expression ( "," expression )* ;
 primary      -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;

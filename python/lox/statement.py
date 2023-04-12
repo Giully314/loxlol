@@ -34,3 +34,26 @@ class If(Statement):
     else_branch: Expression
 
 
+@dataclass(frozen=True)
+class While(Statement):
+    condition: Expression = None
+    body: Statement = None
+    should_break: bool = False
+
+
+@dataclass(frozen=True)
+class Break(Statement):
+    linked_while: While
+
+
+@dataclass(frozen=True)
+class Function:
+    name: Token
+    params: list[Token]
+    body: list[Statement]
+
+
+@dataclass(frozen=True)
+class Return:
+    keyword: Token
+    value: Expression

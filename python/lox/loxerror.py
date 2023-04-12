@@ -1,4 +1,5 @@
 from loxtoken import Token
+from dataclasses import dataclass
 
 class LoxRuntimeError(RuntimeError):
     def __init__(self, msg: str, token: Token):
@@ -7,3 +8,7 @@ class LoxRuntimeError(RuntimeError):
 
 class LoxNonInitializedVar:
     ...
+
+@dataclass(frozen=True)
+class LoxReturn(Exception):
+    value: object  

@@ -2,14 +2,33 @@ from loxtoken import Token, TokenType
 import expression as expr
 import visitor
 from error_reporter import error_reporter
-from loxerror import LoxRuntimeError, LoxNonInitializedVar
+from loxerror import LoxRuntimeError, LoxNonInitializedVar, LoxReturn
 import statement as stmt
 from dataclasses import dataclass, field
 from environment import Environment
+from loxtypes import LoxCallable, LoxFunction
+import time
 
 @dataclass
 class Interpreter:
-    env: Environment = field(default_factory=Environment, init=False)
+    global_env: Environment = field(default_factory=Environment, init=False)
+    env: Environment = None
+
+    def __post_init__(self):
+        self.env = self.global_env
+        
+        class Clock(LoxCallable):
+            def call(self, interpreter, *args: object):
+                return time.time()
+
+            def arity(self) -> int:
+                return 0
+
+            def __str__(self) -> str:
+                return "<native fn>"
+            
+        self.global_env.define_name("clock", Clock())
+
 
     def interpret(self, statements: list[stmt.Statement]) -> str:
         """
@@ -20,29 +39,25 @@ class Interpreter:
                 self.visit(statement)
         except LoxRuntimeError as err:
             error_reporter.runtime_error(err)
-
-    def __stringify(self, obj: object) -> str:
-        if obj is None:
-            return "nil"
-        return str(obj)
     
 
-    def __execute_block(self, s: stmt.Block, env: Environment):
-        # Save the current environment for later, after the block finish its execution.
-        previous_env = self.env
+    @visitor.visitor(stmt.Return)
+    def visit(self, s: stmt.Return):
+        value = None
+        if s.value is not None:
+            value = self.visit(s.value)
+        raise LoxReturn(value)
 
-        try:
-            self.env = env
-
-            for statement in s.statements:
-                self.visit(statement)
-        finally:
-            self.env = previous_env
+    
+    @visitor.visitor(stmt.Function)
+    def visit(self, s: stmt.Function):
+        function = LoxFunction(s)
+        self.env.define(s.name, function)
 
 
     @visitor.visitor(stmt.Block)
     def visit(self, s: stmt.Block):
-        self.__execute_block(s, Environment(self.env))
+        self._execute_block(s.statements, Environment(self.env))
 
 
     @visitor.visitor(stmt.Var)
@@ -71,6 +86,28 @@ class Interpreter:
         elif s.else_branch is not None:
             self.visit(s.else_branch)
 
+    
+    @visitor.visitor(stmt.While)
+    def visit(self, s: stmt.While):
+        while self.visit(s.condition):
+            self.visit(s.body)
+
+
+    @visitor.visitor(expr.Call)
+    def visit(self, e: expr.Call) -> object:
+        callee = self.visit(e.callee)
+
+        if not isinstance(callee, LoxCallable):
+            raise LoxRuntimeError("Can only call functions and classes." ,e.paren)
+        
+        arguments = []
+        for argument in e.arguments:
+            arguments.append(self.visit(argument))
+
+        if callee.arity() != len(arguments):
+            raise LoxRuntimeError(f"Expected {callee.arity()} arguments but got {len(arguments)}.", e.paren)
+
+        return callee.call(self, arguments)
 
     @visitor.visitor(expr.Logical)
     def visit(self, e: expr.Logical) -> object:
@@ -178,6 +215,24 @@ class Interpreter:
     
         # This is unreachable.
         return None
+    
+
+    def __stringify(self, obj: object) -> str:
+        if obj is None:
+            return "nil"
+        return str(obj)
+    
+    
+    def _execute_block(self, statements: list[stmt.Statement], env: Environment):
+        # Save the current environment for later, after the block finish its execution.
+        previous_env = self.env
+        try:
+            self.env = env
+
+            for statement in statements:
+                self.visit(statement)
+        finally:
+            self.env = previous_env
     
     
     def __is_truthful(self, obj: object) -> bool:
