@@ -19,9 +19,10 @@ class LoxCallable(ABC):
 @dataclass
 class LoxFunction(LoxCallable):
     declaration: Function
+    closure: Environment
 
     def call(self, interpreter, args: list[object]) -> Optional[object]:
-        fun_env = Environment(interpreter.global_env)
+        fun_env = Environment(self.closure)
 
         for i, arg in enumerate(args):
             fun_env.define(self.declaration.params[i], arg)

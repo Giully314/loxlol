@@ -2,6 +2,7 @@ import sys
 from scanner import Scanner
 # from ast_printer import ASTPrinter
 from loxparser import Parser
+from loxresolver import Resolver
 from loxinterpreter import Interpreter
 import error_reporter as err
 import statement as stmt
@@ -19,11 +20,14 @@ class Lox:
         # TODO: make a better error checking.
         if err.error_reporter.had_error or err.error_reporter.had_runtime_error:
             return
-
-        # if expression is None:
-        #     print("None expression")
-        #     return
         
+        resolver = Resolver(self.interpreter)
+        resolver.resolve(statements)
+
+        # TODO: make a better error checking.
+        if err.error_reporter.had_error or err.error_reporter.had_runtime_error:
+            return
+
         self.interpreter.interpret(statements)
 
 

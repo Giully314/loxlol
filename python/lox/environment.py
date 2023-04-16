@@ -8,7 +8,11 @@ from loxtoken import Token
 class Environment:
     outer_env: Environment = None
     variables: dict[str, object] = field(default_factory=dict, init=False)
-    
+
+    def get_at(self, distance: int, name: str) -> object:
+        return self.__ancestor(distance).variables[name]
+
+
     def define_name(self, name: str, value: object):
         self.variables[name] = value
 
@@ -40,4 +44,11 @@ class Environment:
     def __setitem__(self, name: Token, value: object):
         """Calls self.assign(name, value)"""
         self.assign(name, value)
-    
+
+
+
+    def __ancestor(self, distance: int) -> Environment:
+        env = self
+        for i in range(distance):
+            env = env.outer_env
+        return env

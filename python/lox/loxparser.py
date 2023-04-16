@@ -15,7 +15,7 @@ class Parser:
     tokens: list[Token]
     current: int = field(default=0, init=False)
     while_stack: list[stmt.While] = field(default_factory=list, init=False)
-
+    anonymous_counter: int = field(default=0, init=False)
 
     class ParseError(Exception):
         """
@@ -50,7 +50,15 @@ class Parser:
         """
         kind: function or class method.
         """
-        name = self.__consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        
+        # name = self.__consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        if self.__check(TokenType.IDENTIFIER):
+            name = self.__advance()
+        else: # anonymous function
+            name = Token(TokenType.IDENTIFIER, f"anonymous{self.anonymous_counter}", None, 0)
+            print(name)
+            self.anonymous_counter += 1
+
         self.__consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
         
         parameters = []

@@ -13,6 +13,7 @@ import time
 class Interpreter:
     global_env: Environment = field(default_factory=Environment, init=False)
     env: Environment = None
+    locals: dict[expr.Expression, int] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
         self.env = self.global_env
@@ -51,7 +52,7 @@ class Interpreter:
     
     @visitor.visitor(stmt.Function)
     def visit(self, s: stmt.Function):
-        function = LoxFunction(s)
+        function = LoxFunction(s, self.env)
         self.env.define(s.name, function)
 
 
@@ -142,7 +143,7 @@ class Interpreter:
 
     @visitor.visitor(expr.Variable)
     def visit(self, e: expr.Variable):
-        return self.env[e.name]
+        return self.__lookup_variable(e.name, e)
 
 
     @visitor.visitor(expr.Literal)
@@ -216,6 +217,18 @@ class Interpreter:
         # This is unreachable.
         return None
     
+
+    def __lookup_variable(self, name: Token, e: expr.Expression):
+        distance = self.locals.get(e, None)
+        if distance is not None:
+            return self.env.get_at(distance, name.lexeme)
+        else:
+            return self.global_env[name]
+    
+
+    def _resolve(self, e: expr.Expression, depth: int):
+        self.locals[e] = depth
+
 
     def __stringify(self, obj: object) -> str:
         if obj is None:
