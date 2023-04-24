@@ -14,7 +14,6 @@ class Parser:
 
     tokens: list[Token]
     current: int = field(default=0, init=False)
-    while_stack: list[stmt.While] = field(default_factory=list, init=False)
     anonymous_counter: int = field(default=0, init=False)
 
     class ParseError(Exception):
@@ -54,10 +53,9 @@ class Parser:
         # name = self.__consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         if self.__check(TokenType.IDENTIFIER):
             name = self.__advance()
-        else: # anonymous function
-            name = Token(TokenType.IDENTIFIER, f"anonymous{self.anonymous_counter}", None, 0)
-            print(name)
-            self.anonymous_counter += 1
+        # else: # anonymous function
+        #     name = Token(TokenType.IDENTIFIER, f"anonymous{self.anonymous_counter}", None, 0)
+        #     self.anonymous_counter += 1
 
         self.__consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
         
@@ -101,8 +99,8 @@ class Parser:
         if self.__match(TokenType.RETURN):
             return self.__return_stmt()
         
-        # if self.__match(TokenType.BREAK):
-        #     return self.__break_stmt()
+        if self.__match(TokenType.BREAK):
+            return self.__break_stmt()
 
         if self.__match(TokenType.PRINT):
             return self.__print_stmt()
@@ -113,15 +111,11 @@ class Parser:
         return self.__expression_stmt()
     
 
-    # def __break_stmt(self) -> stmt.Break:
-    #     print("Break stmt")
-    #     try:
-    #         inner_while = self.while_stack.pop()
-    #         return stmt.Break(inner_while)
-    #     except IndexError as e:
-    #         err.error_reporter.error_token(self.__previous(), "'break' can be used only insed a loop.")
-    #     self.__consume(TokenType.SEMICOLON, "Expect ';' after break.")
-
+    def __break_stmt(self) -> stmt.Break:
+        s = stmt.Break(self.__previous())
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after break.")
+        return s
+    
 
     def  __return_stmt(self) -> stmt.Return:
         keyword = self.__previous()
@@ -157,7 +151,7 @@ class Parser:
 
         # increment clause
         increment = None
-        if not self.__check(TokenType.SEMICOLON):
+        if not self.__check(TokenType.RIGHT_PAREN):
             increment = self.__expression()
         self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after for clause.")
 
@@ -167,11 +161,11 @@ class Parser:
         # the increment is done at the end of the while loop
         if increment is not None:
             body = stmt.Block([body, stmt.StmtExpression(increment)])
+        print(f"{body=}")
 
         if condition is None:
             condition = expr.Literal(True)
         body = stmt.While(condition, body)
-        self.while_stack.append(body) 
 
         # additional block to execute the initializer before the while loop
         if initializer is not None:

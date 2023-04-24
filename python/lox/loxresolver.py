@@ -1,5 +1,5 @@
 """
-A Resolver applies static analysis for resolving bindings. After the program is parsed we need to check if the 
+A Resolver applies static analysis for resolving bindings (and more). After the program is parsed we need to check if the 
 variables are binded to the right scope. For example, as reported in the book, the following code is "broken".
 
 var a = "global";
@@ -17,6 +17,10 @@ To solve this problem we need to use a persistent environment that it is binded 
 the first time.
 The solution to this problem is to compute the index of the list of scopes when the variable is encountered the first time
 and pass the right environment to the interpreter. 
+
+
+Another example is to check if a break statement or a return statement are actually valid. This type of things can be checked before 
+execution.
 
 """
 
@@ -40,11 +44,13 @@ class Resolver:
     interpreter: Interpreter
     scopes: list[dict[str, bool]] = field(default_factory=list, init=False)
     current_function: FunctionType = field(default=FunctionType.NONE, init=False)
-
+    inside_loop: int = field(default=0, init=False)
 
     def resolve(self, statements: list[stmt.Statement]):
+        print("START Resolve")
         for statement in statements:
             self.visit(statement)
+        print("END Resolve")
 
 
     @visitor(stmt.Block)
@@ -91,9 +97,17 @@ class Resolver:
 
     @visitor(stmt.While)
     def visit(self, s: stmt.While):
+        self.inside_loop += 1
         self.visit(s.condition)
         self.visit(s.body)
+        self.inside_loop -= 1
 
+
+    @visitor(stmt.Break)
+    def visit(self, s: stmt.Break):
+        if self.inside_loop == 0:
+            err.error_reporter.error_token(s.keyword, "Can't use break outside a loop.")
+            
 
     @visitor(stmt.Function)
     def visit(self, s: stmt.Function):
@@ -105,7 +119,7 @@ class Resolver:
     
     @visitor(expr.Variable)
     def visit(self, e: expr.Variable):
-        if self.scopes and self.scopes[-1].get(e.name.lexeme, None) == False:
+        if self.scopes and self.scopes[-1].get(e.name.lexeme) == False:
             err.error_reporter.error_token(e.name, "Can't read local variable in its own initializer.")
 
         self.__resolve_local(e, e.name)
@@ -167,9 +181,9 @@ class Resolver:
         self.current_function = enclosing
 
     def __resolve_local(self, e: expr.Expression, name: Token):
-        # i don't know if there exists a better way to express this
         for i in range(len(self.scopes) - 1, -1, -1):
             if name.lexeme in self.scopes[i]:
+                print(f"idx:{i} distance: {len(self.scopes) - 1 - i} {name.lexeme}\n{self.scopes[i]}")
                 self.interpreter._resolve(e, len(self.scopes) - 1 - i)
                 return
 
@@ -189,8 +203,10 @@ class Resolver:
         self.scopes[-1][name.lexeme] = True
 
     def __begin_scope(self):
+        print("begin scope")
         self.scopes.append(dict())
 
     def __end_scope(self):
+        print("end scope")
         self.scopes.pop()
     

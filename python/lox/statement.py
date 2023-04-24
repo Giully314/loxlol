@@ -43,7 +43,7 @@ class While(Statement):
 
 @dataclass(frozen=True)
 class Break(Statement):
-    linked_while: While
+    keyword: Token
 
 
 @dataclass(frozen=True)

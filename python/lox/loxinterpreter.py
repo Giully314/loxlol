@@ -35,11 +35,15 @@ class Interpreter:
         """
         Can raise a LoxRuntimeError.
         """
+        print("START INTERPRET")
+        for k, v in self.locals.items():
+            print(f"Key: {k}\nValue: {v}\n")
         try:
             for statement in statements:
                 self.visit(statement)
         except LoxRuntimeError as err:
             error_reporter.runtime_error(err)
+        # print("END INTERPRET")
     
 
     @visitor.visitor(stmt.Return)
@@ -58,7 +62,9 @@ class Interpreter:
 
     @visitor.visitor(stmt.Block)
     def visit(self, s: stmt.Block):
+        print("Execute block")
         self._execute_block(s.statements, Environment(self.env))
+        print("End Execute block")
 
 
     @visitor.visitor(stmt.Var)
@@ -66,6 +72,7 @@ class Interpreter:
         obj = LoxNonInitializedVar()
         if s.initializer is not None:
             obj = self.visit(s.initializer)
+        # print(f"interpr stmt var {s.name} {obj}")
         self.env.define(s.name, obj)
     
 
@@ -90,8 +97,16 @@ class Interpreter:
     
     @visitor.visitor(stmt.While)
     def visit(self, s: stmt.While):
+        print("Inside while")
+        # print(s.condition)
         while self.visit(s.condition):
+            print("Visit body")
             self.visit(s.body)
+
+
+    @visitor.visitor(stmt.Break)
+    def visit(self, s: stmt.Break):
+        ...
 
 
     @visitor.visitor(expr.Call)
@@ -101,9 +116,9 @@ class Interpreter:
         if not isinstance(callee, LoxCallable):
             raise LoxRuntimeError("Can only call functions and classes." ,e.paren)
         
-        arguments = []
-        for argument in e.arguments:
-            arguments.append(self.visit(argument))
+        arguments = [self.visit(argument) for argument in e.arguments]
+        # for argument in e.arguments:
+        #     arguments.append(self.visit(argument))
 
         if callee.arity() != len(arguments):
             raise LoxRuntimeError(f"Expected {callee.arity()} arguments but got {len(arguments)}.", e.paren)
@@ -126,8 +141,14 @@ class Interpreter:
 
     @visitor.visitor(expr.Assign)
     def visit(self, e: expr.Assign) -> object:
+        # print(f"Assign {e}")
         value = self.visit(e.value)
-        self.env.assign(e.name, value)
+        # self.env.assign(e.name, value) pre
+        distance = self.locals.get(e)
+        if distance is not None:
+            self.env.assign_at(distance, e.name, value)
+        else:
+            self.global_env.assign(e.name, value)
         return value
 
 
@@ -143,6 +164,7 @@ class Interpreter:
 
     @visitor.visitor(expr.Variable)
     def visit(self, e: expr.Variable):
+        # return self.env[e.name]
         return self.__lookup_variable(e.name, e)
 
 
@@ -173,6 +195,8 @@ class Interpreter:
     
     @visitor.visitor(expr.Binary)
     def visit(self, e: expr.Binary) -> object:
+        print(f"visit expr binary {e.left}")
+        print(f"visit expr binary {e.right}")
         left = self.visit(e.left)
         right = self.visit(e.right)
 
@@ -207,6 +231,7 @@ class Interpreter:
                 self.__check_number_string_operands(e.operator, left, right)
                 return left < right
             case TokenType.LESS_EQUAL:
+                print(f"Less equal {type(left)} {type(right)}")
                 self.__check_number_string_operands(e.operator, left, right)
                 return left <= right
             case TokenType.EQUAL_EQUAL:
@@ -219,7 +244,8 @@ class Interpreter:
     
 
     def __lookup_variable(self, name: Token, e: expr.Expression):
-        distance = self.locals.get(e, None)
+        distance = self.locals.get(e)
+        # print(f"lookup variable for {name.lexeme}, {distance=}")
         if distance is not None:
             return self.env.get_at(distance, name.lexeme)
         else:
@@ -227,6 +253,7 @@ class Interpreter:
     
 
     def _resolve(self, e: expr.Expression, depth: int):
+        # print(f"Resolve {e} {depth}")
         self.locals[e] = depth
 
 
@@ -239,11 +266,13 @@ class Interpreter:
     def _execute_block(self, statements: list[stmt.Statement], env: Environment):
         # Save the current environment for later, after the block finish its execution.
         previous_env = self.env
+        # print(f"execute block new env: {env.variables}")
         try:
             self.env = env
-
             for statement in statements:
                 self.visit(statement)
+
+            # print(f"execute block new env after execute: {self.env.variables}")
         finally:
             self.env = previous_env
     

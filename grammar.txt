@@ -8,7 +8,7 @@ parameters   -> IDENTIFIER ( "," IDENTIFIER )* ;
 
 variable_decl -> "var" IDENTIFIER ( "=" expression )? ";" ;
 
-statement    -> expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | return_stmt;
+statement    -> expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | return_stmt | break_stmt;
 block        -> "{" declaration* "}" ;
 expr_stmt    -> expression ";" ;
 print_stmt   -> "print" expression ";" ;
@@ -19,6 +19,7 @@ for_stmt     -> "for" "(" (variable_decl | expr_stmt | ";" )
                             expression? ";" ")"
                             statement ;
 return_stmt  -> "return" expression? ";" ;
+break_stmt   -> "break" ";" ;
 
 
 expression   -> comma ;
