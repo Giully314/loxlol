@@ -2,3 +2,6 @@ test.ipynb
 **/__pycache__
 **.lox
 test.cpp
+c/lox/a.exe
+c/build
+.vscode
