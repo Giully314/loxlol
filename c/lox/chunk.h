@@ -18,8 +18,18 @@ DESCRIPTION:
 #include "value.h"
 
 
+// after this number, OP_CONST_LONG will be used.
+// 256 = 2^8 
+#define MAX_NUM_OF_CONSTS 256
+
+
 typedef enum 
 {
+    OP_ADD,
+    OP_SUBTRACT,
+    OP_MULTIPLY,
+    OP_DIVIDE,
+    OP_NEGATE,
     OP_CONSTANT_LONG, // support 24 bit operand for constant
     OP_CONSTANT,
     OP_RETURN,

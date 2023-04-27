@@ -133,7 +133,7 @@ void write_constant(Chunk* chunk, Value value, uint32_t line)
 {
     uint32_t idx = add_constant(chunk, value);
 
-    if (idx < 256)
+    if (idx < MAX_NUM_OF_CONSTS)
     {
         write_chunk(chunk, OP_CONSTANT, line);
         write_chunk(chunk, (uint8_t)idx, line);

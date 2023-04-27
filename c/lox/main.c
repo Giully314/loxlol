@@ -17,20 +17,26 @@ int main()
     // write_chunk(&chunk, OP_CONSTANT, 1);
     // write_chunk(&chunk, c, 1);
 
-    write_constant(&chunk, 3.14, 1);
 
-    write_chunk(&chunk, OP_RETURN, 1);
-    write_chunk(&chunk, OP_RETURN, 1);
-    write_chunk(&chunk, OP_RETURN, 1);
-    write_chunk(&chunk, OP_RETURN, 2);
-    write_chunk(&chunk, OP_RETURN, 3);
-    write_chunk(&chunk, OP_RETURN, 4);
+    write_constant(&chunk, 4, 1);
+    write_constant(&chunk, 3, 2);
+    write_constant(&chunk, 2, 2);
+    write_chunk(&chunk, OP_NEGATE, 2);
+    write_chunk(&chunk, OP_MULTIPLY, 2);
+    write_chunk(&chunk, OP_SUBTRACT, 2);
     
-    write_constant(&chunk, 2.7, 5);
-    write_constant(&chunk, 12, 5);
-    write_chunk(&chunk, OP_RETURN, 5);
+    // write_constant(&chunk, 5, 2);
+    
+    // write_chunk(&chunk, OP_DIVIDE, 2);
+    // write_chunk(&chunk, OP_ADD, 2);
+    // write_chunk(&chunk, OP_ADD, 2);
 
-    disassemble_chunk(&chunk, "test chunk");
+
+    write_chunk(&chunk, OP_RETURN, 3);
+
+
+
+    interpret(&chunk);
     
     free_vm();
     
