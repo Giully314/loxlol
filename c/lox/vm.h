@@ -11,15 +11,14 @@ PURPOSE:
 #include "chunk.h"
 #include "common.h"
 #include "value.h"
+#include "stack.h"
 
 #define STACK_MAX 256
 
 
 typedef struct
 {
-    Value stack[STACK_MAX];
-    // Point to the first free space.
-    Value* stack_top;
+    Stack stack;
 
     Chunk* chunk;
 
@@ -40,8 +39,6 @@ void init_vm();
 InterpretResult interpret(Chunk* chunk);
 void free_vm();
 
-void push_stack(Value value);
-Value pop_stack();
 
 
 #endif 

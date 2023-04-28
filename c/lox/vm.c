@@ -7,6 +7,7 @@ lox/vm.c
 #include "value.h"
 #include "common.h"
 #include "debug.h"
+#include "stack.h"
 
 #include <stdio.h>
 
@@ -17,10 +18,10 @@ VM vm;
 static void print_stack()
 {
     printf("          ");
-    for (Value* e = vm.stack; e < vm.stack_top; ++e)
+    for (uint32_t i = 0; i < vm.stack.size; ++i)
     {
         printf("[ ");
-        print_value(*e);
+        print_value(vm.stack.s[i]);
         printf(" ]");
     }
     printf("\n");
@@ -38,11 +39,12 @@ static InterpretResult run()
 
     #define BINARY_OP(op) \
         do { \
-            double b = pop_stack(); \
-            double a = pop_stack(); \
-            push_stack(a op b); \
+            double b = pop_stack(&vm.stack); \
+            vm.stack.s[vm.stack.size-1] op##= b;\
         } while (false)
 
+            // double a = pop_stack(&vm.stack); 
+            //push_stack(&vm.stack, a op b); 
 
 
     while (true)
@@ -78,25 +80,26 @@ static InterpretResult run()
 
         case OP_NEGATE: 
         {
-            push_stack(-pop_stack());
+            uint32_t top = vm.stack.size - 1;
+            vm.stack.s[top] = -vm.stack.s[top];
             break;
         }
         case OP_CONSTANT_LONG:
         {
             Value value = READ_CONSTANT_LONG();
-            push_stack(value);
+            push_stack(&vm.stack, value);
             break;
         }
         case OP_CONSTANT:
         {
             Value value = READ_CONSTANT();
-            push_stack(value);
+            push_stack(&vm.stack, value);
             break;
         }
 
         case OP_RETURN:
         {
-            print_value(pop_stack());
+            print_value(pop_stack(&vm.stack));
             printf("\n");
             return INTERPRET_OK;
         }
@@ -116,13 +119,13 @@ static InterpretResult run()
 
 static void reset_stack()
 {
-    vm.stack_top = vm.stack;
+    vm.stack.size = 0;
 }
 
 
 void init_vm()
 {
-    reset_stack();
+    init_stack(&vm.stack);
 }
 
 
@@ -135,18 +138,5 @@ InterpretResult interpret(Chunk* chunk)
 
 void free_vm()
 {
-
-}
-
-
-void push_stack(Value value)
-{
-    *vm.stack_top++ = value; 
-}
-
-
-Value pop_stack()
-{
-    --vm.stack_top;
-    return *vm.stack_top;
+    free_stack(&vm.stack);
 }
