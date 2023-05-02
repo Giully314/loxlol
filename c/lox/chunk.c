@@ -18,69 +18,72 @@ void init_line_array(LineArray* array)
     array->capacity = 0;
 }
 
-void update_line_array(LineArray* array, uint32_t line, uint32_t value)
+void write_new_line(LineArray* array, uint32_t offset, uint32_t line)
 {
-    array->lines[line-1] = value;
-}
+    // Same line
+    if (array->size > 0 && array->lines[array->size-1].line == line)
+    {
+        return;
+    }
 
-void write_new_line(LineArray* array, uint32_t value)
-{
     if (array->capacity < array->size + 1)
     {
         uint32_t old_capacity = array->capacity;
         array->capacity = GROW_CAPACITY(old_capacity);
-        array->lines = GROW_ARRAY(uint32_t, array->lines, old_capacity, array->capacity);
+        array->lines = GROW_ARRAY(LinePair, array->lines, old_capacity, array->capacity);
     }
 
-    array->lines[array->size++] = value;
+    array->lines[array->size].offset = offset;
+    array->lines[array->size].line = line;
+    ++array->size;
 }
 
 // TODO: instead of linear search we could use binary search.
-uint32_t get_line(LineArray* array, uint32_t value)
+uint32_t get_line(LineArray* array, uint32_t offset)
 {
     for (uint32_t i = 0; i < array->size; ++i)
     {
-        if (value < array->lines[i])
+        if (offset < array->lines[i].offset)
         {
-            return i + 1;
+            return array->lines[i-1].line;
         }
     }
-    // This should never happen.
-    return 0;
+
+    return array->lines[array->size-1].line;
 }
 
 
-uint32_t get_if_not_same_line(LineArray* array, uint32_t value1, uint32_t value2)
-{
-    for (uint32_t i = 0; i < array->size; ++i)
-    {    
-        if (value1 < array->lines[i] || value2 < array->lines[i])
-        {
-            // We need to do an additional check to see if they are in the same line.
-            if (value1 < array->lines[i] && value2 < array->lines[i])
-            {
-                return 0;
-            }
-            else // return the line of the value2
-            {
-                for (uint32_t j = i+1; j < array->size; ++j)
-                {
-                    if (value2 < array->lines[j])
-                    {
-                        return j + 1;
-                    } 
-                }
-            }
-        }
-    }
-    // This should never happen.
-    return 0;
-}
+// uint32_t get_if_not_same_line(LineArray* array, uint32_t value1, uint32_t value2)
+// {
+//     for (uint32_t i = 0; i < array->size; ++i)
+//     {    
+//         if (value1 < array->lines[i] || value2 < array->lines[i])
+//         {
+//             // We need to do an additional check to see if they are in the same line.
+//             if (value1 < array->lines[i] && value2 < array->lines[i])
+//             {
+//                 return 0;
+//             }
+//             else // return the line of the value2
+//             {
+//                 for (uint32_t j = i+1; j < array->size; ++j)
+//                 {
+//                     if (value2 < array->lines[j])
+//                     {
+//                         return j + 1;
+//                     } 
+//                 }
+//             }
+//         }
+//     }
+//     // This should never happen.
+//     return 0;
+// }
 
 
 void free_line_array(LineArray* array)
 {
-    FREE_ARRAY(uint32_t, array->lines, array->capacity);
+    FREE_ARRAY(LinePair, array->lines, array->capacity);
     init_line_array(array);
 }
 
@@ -110,15 +113,7 @@ void write_chunk(Chunk* chunk, uint8_t byte, uint32_t line)
     // This update must be done before the line update because we need to use size as upper bound (not included).
     chunk->code[chunk->size++] = byte;
 
-    // The line is already registered.
-    if (chunk->lines.size >= line)
-    {
-        update_line_array(&chunk->lines, line, chunk->size);
-    }
-    else // allocate space for new line.
-    {
-        write_new_line(&chunk->lines, chunk->size);
-    }
+    write_new_line(&chunk->lines, chunk->size-1, line);
 }
 
 

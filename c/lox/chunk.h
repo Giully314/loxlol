@@ -35,15 +35,14 @@ typedef enum
     OP_RETURN,
 } OpCode;
 
-
-
 typedef struct
 {
-    // The value in the position lines[i] is the idx in the chunk's code of the last bytecode in the line 
-    // i + 1. So for example if lines[0] = 10 this means that in line 1 there are the first 10 bytescodes (from
-    // 0 to 9).
-    // If lines[1] = 15 then the bytecodes from 10 to 14 are in line 2. 
-    uint32_t *lines;
+    uint32_t offset;
+    uint32_t line;
+} LinePair;
+typedef struct
+{    
+    LinePair *lines;
     uint32_t size;
     uint32_t capacity;
 } LineArray;
@@ -51,15 +50,13 @@ typedef struct
 
 void init_line_array(LineArray* array);
 
-// Precondition: 0 < line < capacity.
-void update_line_array(LineArray* array, uint32_t line, uint32_t value);
 
 // Write a new line and in case reallocate the array for new memory.
-void write_new_line(LineArray* array, uint32_t value);
+void write_new_line(LineArray* array, uint32_t offset, uint32_t line);
 
-// value is the idx of the bytecode whose line we want.
-// Return 0 if the value is not registered.
-uint32_t get_line(LineArray* array, uint32_t value);
+// Precondition: offset is a valid number.
+// offset is the idx of the bytecode whose line we want.
+uint32_t get_line(LineArray* array, uint32_t offset);
 
 // Precondition value1 <= value2
 // Return 0 if value1 and value2 are in the same line, else the return the line of value2.

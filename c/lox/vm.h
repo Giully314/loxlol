@@ -36,7 +36,7 @@ typedef enum
 
 
 void init_vm();
-InterpretResult interpret(Chunk* chunk);
+InterpretResult interpret(const char* source);
 void free_vm();
 
 

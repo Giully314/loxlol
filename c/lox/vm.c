@@ -129,11 +129,10 @@ void init_vm()
 }
 
 
-InterpretResult interpret(Chunk* chunk)
+InterpretResult interpret(const char* source)
 {
-    vm.chunk = chunk;
-    vm.ip = chunk->code;
-    return run();
+    compile(source);
+    return INTERPRET_OK;
 }
 
 void free_vm()

@@ -29,7 +29,4 @@ PURPOSE:
 // old_size != 0 and new_size > old_size -> grow.
 void *reallocate(void *pointer, size_t old_size, size_t new_size);
 
-
-
-
 #endif

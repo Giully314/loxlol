@@ -56,22 +56,34 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
 {
     printf("%04u ", offset);
 
-    if (offset > 0) // if offset is 0 we can't pass offset-1 (underflow because of uint)
+    // if (offset > 0) // if offset is 0 we can't pass offset-1 (underflow because of uint)
+    // {
+    //     uint32_t line = get_if_not_same_line(&chunk->lines, offset, offset - 1);
+    //     if (line == 0)
+    //     {
+    //         printf("   | ");
+    //     }
+    //     else
+    //     {
+    //         printf("%4u ", line);
+    //     }
+    // }
+    // else
+    // {
+    //     printf("%4u ", get_line(&chunk->lines, offset));
+    // }
+
+    // TODO: Write a function that avoid the ricomputation of get_line(offset-1)
+    uint32_t line = get_line(&chunk->lines, offset);
+    if (offset > 0 && line == get_line(&chunk->lines, offset - 1)) 
     {
-        uint32_t line = get_if_not_same_line(&chunk->lines, offset, offset - 1);
-        if (offset > 0 && line == 0)
-        {
-            printf("   | ");
-        }
-        else
-        {
-            printf("%4u ", line);
-        }
-    }
-    else
+        printf("   | ");
+    } 
+    else 
     {
-        printf("%4u ", get_line(&chunk->lines, offset));
+        printf("%4d ", line);
     }
+
 
     uint8_t instruction = chunk->code[offset];
     switch (instruction)

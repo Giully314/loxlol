@@ -7,3 +7,5 @@ c/lox/a.exe
 c/build
 .vscode
 a.exe
+c/lox/compile.bat
+c/lox/source.txt
