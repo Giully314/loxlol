@@ -1,7 +1,17 @@
+/*
+c/lox/scanner.h
+
+PURPOSE: Define the scanner interface.
+
+
+
+*/
+
 #ifndef SCANNER_H
 #define SCANNER_H
 
-typedef enum {
+typedef enum 
+{
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,

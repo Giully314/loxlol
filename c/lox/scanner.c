@@ -54,7 +54,7 @@ static bool match(char expected)
 {
     if (is_at_end()) return false;
     if (*scanner.current != expected) return false;
-    scanner.current++;
+    ++scanner.current;
     return true;
 }
 
@@ -150,7 +150,7 @@ static Token number()
     while (is_digit(peek())) advance();
 
     // Look for a fractional part.
-    if (peek() == '.' && isDigit(peekNext())) 
+    if (peek() == '.' && is_digit(peek_next())) 
     {
         // Consume the ".".
         advance();
@@ -213,8 +213,8 @@ static TokenType identifier_type()
 
 static Token identifier() 
 {
-  while (is_alpha(peek()) || is_digit(peek())) advance();
-  return make_token(identifier_type());
+    while (is_alpha(peek()) || is_digit(peek())) advance();
+    return make_token(identifier_type());
 }
 
 
@@ -224,7 +224,7 @@ Token scan_token()
     skip_whitespace();
     scanner.start = scanner.current;
 
-    if (isAtEnd()) return make_token(TOKEN_EOF);
+    if (is_at_end()) return make_token(TOKEN_EOF);
 
     
     char c = advance();
