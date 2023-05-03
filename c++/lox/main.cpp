@@ -5,6 +5,7 @@
 #include "debug.hpp"
 #include "common.hpp"
 #include "vm.hpp"
+#include "token.hpp"
 
 int main()
 {  
