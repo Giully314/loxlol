@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,6 +97,8 @@ int main(int argc, const char* argv[])
         fprintf(stderr, "Usace clox [path]\n");
         exit(64);
     }
+
+    // run_file("test.lox");
     
     
     free_vm();

@@ -56,23 +56,6 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
 {
     printf("%04u ", offset);
 
-    // if (offset > 0) // if offset is 0 we can't pass offset-1 (underflow because of uint)
-    // {
-    //     uint32_t line = get_if_not_same_line(&chunk->lines, offset, offset - 1);
-    //     if (line == 0)
-    //     {
-    //         printf("   | ");
-    //     }
-    //     else
-    //     {
-    //         printf("%4u ", line);
-    //     }
-    // }
-    // else
-    // {
-    //     printf("%4u ", get_line(&chunk->lines, offset));
-    // }
-
     // TODO: Write a function that avoid the ricomputation of get_line(offset-1)
     uint32_t line = get_line(&chunk->lines, offset);
     if (offset > 0 && line == get_line(&chunk->lines, offset - 1)) 
@@ -97,6 +80,8 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
         case OP_DIVIDE:
             return simple_instruction("OP_DIVIDE", offset);
             
+        case OP_NOT:
+            return simple_instruction("OP_NOT", offset);
         case OP_NEGATE:
             return simple_instruction("OP_NEGATE", offset);
         
@@ -104,6 +89,19 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
             return constant_long_instruction("OP_CONSTANT_LONG", chunk, offset);
         case OP_CONSTANT:
             return constant_instruction("OP_CONSTANT", chunk, offset);
+        case OP_NIL:
+            return simple_instruction("OP_NIL", offset);
+        case OP_TRUE:
+            return simple_instruction("OP_TRUE", offset);
+        case OP_FALSE:
+            return simple_instruction("OP_FALSE", offset);
+
+        case OP_EQUAL:
+            return simple_instruction("OP_EQUAL", offset);
+        case OP_GREATER:
+            return simple_instruction("OP_GREATER", offset);
+        case OP_LESS:
+            return simple_instruction("OP_LESS", offset);
         
         case OP_RETURN:
             return simple_instruction("OP_RETURN", offset);

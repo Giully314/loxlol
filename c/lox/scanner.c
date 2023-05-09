@@ -73,7 +73,7 @@ static bool is_alpha(char c)
 }
 
 
-static void skipWhitespace() 
+static void skip_whitespace() 
 {
     while (true) 
     {
@@ -160,7 +160,7 @@ static Token number()
     return make_token(TOKEN_NUMBER);
 }
 
-static TokenType checkKeyword(uint32_t start, uint32_t length, const char* rest, TokenType type) 
+static TokenType check_keyword(uint32_t start, uint32_t length, const char* rest, TokenType type) 
 {
     if (scanner.current - scanner.start == start + length &&
       memcmp(scanner.start + start, rest, length) == 0) 
@@ -183,9 +183,9 @@ static TokenType identifier_type()
             {
                 switch (scanner.start[1]) 
                 {
-                    case 'a': return checkKeyword(2, 3, "lse", TOKEN_FALSE);
-                    case 'o': return checkKeyword(2, 1, "r", TOKEN_FOR);
-                    case 'u': return checkKeyword(2, 1, "n", TOKEN_FUN);
+                    case 'a': return check_keyword(2, 3, "lse", TOKEN_FALSE);
+                    case 'o': return check_keyword(2, 1, "r", TOKEN_FOR);
+                    case 'u': return check_keyword(2, 1, "n", TOKEN_FUN);
                 }
             }
             break;
@@ -200,8 +200,8 @@ static TokenType identifier_type()
             {
                 switch (scanner.start[1]) 
                 {
-                    case 'h': return checkKeyword(2, 2, "is", TOKEN_THIS);
-                    case 'r': return checkKeyword(2, 2, "ue", TOKEN_TRUE);
+                    case 'h': return check_keyword(2, 2, "is", TOKEN_THIS);
+                    case 'r': return check_keyword(2, 2, "ue", TOKEN_TRUE);
                 }
             }
             break;

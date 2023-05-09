@@ -10,6 +10,8 @@ PURPOSE: Define the scanner interface.
 #ifndef SCANNER_H
 #define SCANNER_H
 
+#include "common.h"
+
 typedef enum 
 {
   // Single-character tokens.
