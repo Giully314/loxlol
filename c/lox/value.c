@@ -5,8 +5,10 @@ lox/value.c
 #include "value.h"
 #include "memory.h"
 #include "common.h"
-#include <stdio.h>
+#include "object.h"
 
+#include <stdio.h>
+#include <string.h>
 
 bool values_equal(Value a, Value b)
 {
@@ -16,6 +18,12 @@ bool values_equal(Value a, Value b)
         case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL:    return true;
         case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+        case VAL_OBJ: 
+        {
+            ObjString* s1 = AS_STRING(a);
+            ObjString* s2 = AS_STRING(b);
+            return s1->size == s2->size && memcmp(s1->chars, s2->chars, s1->size) == 0;
+        }
         default:         return false; // Unreachable.
     }
 }
@@ -57,5 +65,6 @@ void print_value(Value value)
             break;
         case VAL_NIL: printf("nil"); break;
         case VAL_NUMBER: printf("%g", AS_NUMBER(value)); break;
+        case VAL_OBJ: print_object(value); break;
     }
 }

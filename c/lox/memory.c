@@ -4,6 +4,8 @@ lox/memory.c
 
 #include "memory.h"
 #include "common.h"
+#include "object.h"
+#include "vm.h"
 
 #include <stdlib.h>
 
@@ -27,4 +29,28 @@ void* reallocate(void* pointer, size_t old_size, size_t new_size)
     }
 
     return result;
+}
+
+static void free_object(Obj* obj)
+{
+    switch (obj->type)
+    {
+        case OBJ_STRING:
+            ObjString* s = (ObjString*)obj;
+            // FREE_ARRAY(char, s->chars, s->size + 1);
+            // FREE(ObjString, obj);
+            reallocate(s, sizeof(ObjString) + s->size + 1, 0);
+            break;
+    }
+}
+
+void free_objects()
+{
+    Obj* obj = vm.objects;
+    while (obj != NULL)
+    {
+        Obj* next = obj->next;
+        free_object(obj);
+        obj = next;
+    }
 }

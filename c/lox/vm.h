@@ -12,8 +12,9 @@ PURPOSE:
 #include "common.h"
 #include "value.h"
 #include "stack.h"
+#include "object.h"
 
-#define STACK_MAX 256
+// #define STACK_MAX 256
 
 
 typedef struct
@@ -24,6 +25,8 @@ typedef struct
 
     // Instruction pointer.
     uint8_t* ip;
+
+    Obj* objects;
 } VM;
 
 
@@ -33,6 +36,9 @@ typedef enum
     INTERPRET_COMPILE_ERROR,
     INTERPRET_RUNTIME_ERROR
 } InterpretResult;
+
+
+extern VM vm;
 
 
 void init_vm();

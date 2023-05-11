@@ -9,13 +9,20 @@ lox/vm.c
 #include "debug.h"
 #include "stack.h"
 #include "compiler.h"
+#include "object.h"
+#include "memory.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
 // Global variable. It's ok to use this approach for simplicity because there is only one vm.
 VM vm;
 
+#define POP()       (pop_stack(&vm.stack))
+#define PUSH(value) (push_stack(&vm.stack, (value)))
+
+//TODO: Note, this is a memory leak now that some Value are in the heap.
 static void reset_stack()
 {
     vm.stack.size = 0;
@@ -61,6 +68,21 @@ static bool is_falsey(Value value)
 }
 
 
+static void concatenate()
+{
+    ObjString* b = AS_STRING(POP());
+    ObjString* a = AS_STRING(POP());
+
+    uint32_t size = a->size + b->size;
+    ObjString* result = make_string(size);
+    memcpy(result->chars, a->chars, a->size);
+    memcpy(result->chars + a->size, b->chars, b->size);
+    result->chars[size] = '\0';
+
+    return PUSH(OBJ_VAL(result));
+}
+
+
 static InterpretResult run()
 {
     #define READ_BYTE() (*vm.ip++)
@@ -98,7 +120,21 @@ static InterpretResult run()
         {
         case OP_ADD: 
         {
-            BINARY_OP(NUMBER_VAL, +);
+            if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
+            {
+                concatenate();
+            }
+            else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) 
+            { 
+                double b = AS_NUMBER(POP()); 
+                double a = AS_NUMBER(POP()); 
+                PUSH(NUMBER_VAL(a + b));
+            } 
+            else
+            {
+                runtime_error("Operands must be numbers"); 
+                return INTERPRET_RUNTIME_ERROR;
+            }
             break;
         }
         case OP_SUBTRACT: 
@@ -182,6 +218,7 @@ static InterpretResult run()
 void init_vm()
 {
     init_stack(&vm.stack);
+    vm.objects = NULL;
 }
 
 
@@ -208,5 +245,8 @@ InterpretResult interpret(const char* source)
 
 void free_vm()
 {
+    free_objects();
     free_stack(&vm.stack);
 }
+
+#undef POP
