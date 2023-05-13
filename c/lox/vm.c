@@ -11,6 +11,7 @@ lox/vm.c
 #include "compiler.h"
 #include "object.h"
 #include "memory.h"
+#include "table.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -72,12 +73,7 @@ static void concatenate()
 {
     ObjString* b = AS_STRING(POP());
     ObjString* a = AS_STRING(POP());
-
-    uint32_t size = a->size + b->size;
-    ObjString* result = make_string(size);
-    memcpy(result->chars, a->chars, a->size);
-    memcpy(result->chars + a->size, b->chars, b->size);
-    result->chars[size] = '\0';
+    ObjString* result = concatenate_string(a, b);
 
     return PUSH(OBJ_VAL(result));
 }
@@ -219,6 +215,7 @@ void init_vm()
 {
     init_stack(&vm.stack);
     vm.objects = NULL;
+    init_hashtable(&vm.strings);
 }
 
 
@@ -245,6 +242,7 @@ InterpretResult interpret(const char* source)
 
 void free_vm()
 {
+    free_hashtable(&vm.strings);
     free_objects();
     free_stack(&vm.stack);
 }

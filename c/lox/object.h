@@ -28,13 +28,16 @@ struct Obj
 struct ObjString
 {
     Obj obj;
-    uint32_t size;  
+    uint32_t size;
+    uint32_t hash;  
     char chars[];
 };
 
 
+ObjString* concatenate_string(ObjString* s1, ObjString* s2);
 ObjString* copy_string(const char* chars, uint32_t size);
 ObjString* make_string(uint32_t size);
+
 
 void print_object(Value value);
 

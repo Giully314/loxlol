@@ -13,6 +13,7 @@ PURPOSE:
 #include "value.h"
 #include "stack.h"
 #include "object.h"
+#include "table.h"
 
 // #define STACK_MAX 256
 
@@ -20,12 +21,12 @@ PURPOSE:
 typedef struct
 {
     Stack stack;
+    HashTable strings;
 
     Chunk* chunk;
 
     // Instruction pointer.
     uint8_t* ip;
-
     Obj* objects;
 } VM;
 

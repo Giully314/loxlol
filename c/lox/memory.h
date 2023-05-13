@@ -9,6 +9,7 @@ PURPOSE:
 #define MEMORY_H
 
 #include "common.h"
+#include "object.h"
 
 #define ALLOCATE(type, count) \
     (type*)reallocate(NULL, 0, sizeof(type) * (count))
@@ -33,6 +34,7 @@ PURPOSE:
 // old_size != 0 and new_size < old_size -> shrink .
 // old_size != 0 and new_size > old_size -> grow.
 void *reallocate(void *pointer, size_t old_size, size_t new_size);
+void free_object(Obj* obj);
 void free_objects();
 
 #endif
