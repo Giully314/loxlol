@@ -87,7 +87,7 @@ static InterpretResult run()
         ((0u | READ_BYTE()) << 8\
              | READ_BYTE())  << 8\
              | READ_BYTE()])
-
+    #define READ_STRING() AS_STRING(READ_CONSTANT())
     #define BINARY_OP(value_type, op) \
         do { \
             if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) \
@@ -191,10 +191,51 @@ static InterpretResult run()
         case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
         case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
 
+        case OP_PRINT:
+        {
+            print_value(POP());
+            printf("\n");
+            break;
+        }
+
+        case OP_DEFINE_GLOBAL:
+        {
+            ObjString* name = READ_STRING();
+            set_hashtable(&vm.globals, name, peek(0));
+            POP();
+            break;
+        }
+        case OP_GET_GLOBAL:
+        {
+            ObjString* name = READ_STRING();
+            Value value;
+            if (!get_hashtable(&vm.globals, name, &value))
+            {
+                runtime_error("Undefined variable '%s'.", name->chars);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            PUSH(value);
+            break;
+        }
+        case OP_SET_GLOBAL:
+        {
+            ObjString* name = READ_STRING();
+            // True if name is a new key.
+            if (set_hashtable(&vm.globals, name, peek(0)))
+            {
+                del_hashtable(&vm.globals, name);
+                runtime_error("Undefined variable '%s'.", name->chars);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            break;
+        }
+
+        case OP_POP: POP(); break;
+
         case OP_RETURN:
         {
-            print_value(pop_stack(&vm.stack));
-            printf("\n");
+            // print_value(pop_stack(&vm.stack));
+            // printf("\n");
             return INTERPRET_OK;
         }
         
@@ -207,6 +248,7 @@ static InterpretResult run()
     #undef READ_BYTE
     #undef READ_CONSTANT
     #undef READ_CONSTANT_LONG
+    #undef READ_STRING
     #undef BINARY_OP
 }
 
@@ -215,6 +257,7 @@ void init_vm()
 {
     init_stack(&vm.stack);
     vm.objects = NULL;
+    init_hashtable(&vm.globals);
     init_hashtable(&vm.strings);
 }
 
@@ -242,6 +285,7 @@ InterpretResult interpret(const char* source)
 
 void free_vm()
 {
+    free_hashtable(&vm.globals);
     free_hashtable(&vm.strings);
     free_objects();
     free_stack(&vm.stack);

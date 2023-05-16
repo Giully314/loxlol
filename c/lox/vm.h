@@ -22,6 +22,7 @@ typedef struct
 {
     Stack stack;
     HashTable strings;
+    HashTable globals;
 
     Chunk* chunk;
 
