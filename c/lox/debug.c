@@ -26,6 +26,22 @@ static uint32_t simple_instruction(const char* name, uint32_t offset)
     return offset + 1;
 }
 
+static uint32_t byte_instruction(const char* name, Chunk* chunk, uint32_t offset) 
+{
+    uint8_t slot = chunk->code[offset + 1];
+    printf("%-16s %4d\n", name, slot);
+    return offset + 2; 
+}
+
+static uint32_t jump_instruction(const char* name, int sign, Chunk* chunk, uint32_t offset)
+{
+    uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
+    jump |= chunk->code[offset + 2];
+    printf("%-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
+    return offset + 3;
+}
+
+
 static uint32_t constant_long_instruction(const char* name, Chunk* chunk, uint32_t offset)
 {
     // Extract the 3 bytes.
@@ -102,6 +118,8 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
             return simple_instruction("OP_GREATER", offset);
         case OP_LESS:
             return simple_instruction("OP_LESS", offset);
+        case OP_SWITCH_EQUAL:
+            return simple_instruction("OP_SWITCH_EQUAL", offset);
 
         case OP_DEFINE_GLOBAL:
             return constant_instruction("OP_DEFINE_GLOBAL", chunk, offset);
@@ -109,6 +127,10 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
             return constant_instruction("OP_GET_GLOBAL", chunk, offset);
         case OP_SET_GLOBAL:
             return constant_instruction("OP_SET_GLOBAL", chunk, offset);
+        case OP_SET_LOCAL:
+            return byte_instruction("OP_SET_LOCAL", chunk, offset);
+        case OP_GET_LOCAL:
+            return byte_instruction("OP_GET_LOCAL", chunk, offset);
 
         case OP_POP:
             return simple_instruction("OP_POP", offset);
@@ -118,6 +140,14 @@ uint32_t disassemble_instruction(Chunk* chunk, uint32_t offset)
         
         case OP_RETURN:
             return simple_instruction("OP_RETURN", offset);
+
+        case OP_JUMP:
+            return jump_instruction("OP_JUMP", 1, chunk, offset);
+        case OP_JUMP_IF_FALSE:
+            return jump_instruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
+        case OP_LOOP:
+            return jump_instruction("OP_LOOP", -1, chunk, offset);
+        
         default:
             printf("Unknown opcode %u\n", instruction);
             return offset + 1;

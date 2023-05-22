@@ -82,12 +82,18 @@ static void concatenate()
 static InterpretResult run()
 {
     #define READ_BYTE() (*vm.ip++)
+
+    #define READ_SHORT() (vm.ip += 2, (uint16_t)((vm.ip[-2] << 8) | vm.ip[-1]))
+
     #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+    
     #define READ_CONSTANT_LONG() (vm.chunk->constants.values[\
         ((0u | READ_BYTE()) << 8\
              | READ_BYTE())  << 8\
              | READ_BYTE()])
+    
     #define READ_STRING() AS_STRING(READ_CONSTANT())
+    
     #define BINARY_OP(value_type, op) \
         do { \
             if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) \
@@ -188,6 +194,12 @@ static InterpretResult run()
             push_stack(&vm.stack, BOOL_VAL(values_equal(a, b)));
             break;
         }
+        case OP_SWITCH_EQUAL:
+        {
+            Value b = POP();
+            PUSH(BOOL_VAL(values_equal(peek(0), b)));
+            break;
+        }
         case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
         case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
 
@@ -229,6 +241,19 @@ static InterpretResult run()
             }
             break;
         }
+        case OP_SET_LOCAL:
+        {
+            uint8_t slot = READ_BYTE();
+            vm.stack.s[slot] = peek(0);
+            break;
+        }
+        case OP_GET_LOCAL:
+        {
+            uint8_t slot = READ_BYTE();
+            PUSH(vm.stack.s[slot]);
+            break;
+        }
+        
 
         case OP_POP: POP(); break;
 
@@ -239,6 +264,29 @@ static InterpretResult run()
             return INTERPRET_OK;
         }
         
+        case OP_JUMP_IF_FALSE:
+        {
+            uint16_t offset = READ_SHORT();
+            if (is_falsey(peek(0)))
+            {
+                vm.ip += offset;
+            }
+            break;
+        }
+        case OP_JUMP:
+        {
+            uint16_t offset = READ_SHORT();
+            vm.ip += offset;
+            break;
+        }
+        case OP_LOOP:
+        {
+            uint16_t offset = READ_SHORT();
+            vm.ip -= offset;
+            break;
+        }
+
+
         default:
             break;
         }
@@ -246,6 +294,7 @@ static InterpretResult run()
 
 
     #undef READ_BYTE
+    #undef READ_SHORT
     #undef READ_CONSTANT
     #undef READ_CONSTANT_LONG
     #undef READ_STRING
