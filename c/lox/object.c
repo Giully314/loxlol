@@ -5,6 +5,7 @@
 #include "common.h"
 #include "vm.h"
 #include "table.h"
+#include "chunk.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,7 @@ static Obj* allocate_object(uint32_t size, ObjType type)
 //     return string;
 // }
 
+//**************************** OBJ_STRING ******************************************************
 
 static uint32_t hash_string(const char* key, uint32_t size)
 {
@@ -80,6 +82,7 @@ ObjString* concatenate_string(ObjString* s1, ObjString* s2)
 ObjString* copy_string(const char* chars, uint32_t size)
 {   
     uint32_t hash = hash_string(chars, size);
+    // printf("COPY STRING %.*s\n", size, chars);
     
     // Check if the string is already registered.
     ObjString* interned = find_string_hashtable(&vm.strings, chars, size, hash);
@@ -96,6 +99,33 @@ ObjString* copy_string(const char* chars, uint32_t size)
     return string;
 }
 
+//**************************** OBJ_STRING ******************************************************
+
+
+//**************************** OBJ_FUNCTION ******************************************************
+
+ObjFunction* new_function()
+{
+    ObjFunction* function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    function->arity = 0;
+    function->name = NULL;
+    init_chunk(&function->chunk);
+    return function;
+}
+
+
+//**************************** OBJ_FUNCTION ******************************************************
+
+
+static void print_function(ObjFunction* function)
+{
+    if (function->name == NULL)
+    {
+        printf("<script>");
+        return;
+    }
+    printf("<fn %s>", function->name->chars);
+}
 
 void print_object(Value value)
 {
@@ -103,6 +133,9 @@ void print_object(Value value)
     {
     case OBJ_STRING:
         printf("%s", AS_CSTRING(value));
+        break;
+    case OBJ_FUNCTION:
+        print_function(AS_FUNCTION(value));
         break;
     }
 }

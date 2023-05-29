@@ -8,6 +8,7 @@
 #include "value.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 
@@ -189,5 +190,21 @@ ObjString* find_string_hashtable(HashTable* table, const char* chars, uint32_t s
         }
 
         idx = (idx + 1) % table->capacity;
+    }
+}
+
+
+void print_hashtable(HashTable* table)
+{
+    for (uint32_t i = 0; i < table->capacity; ++i)
+    {
+        Entry* entry = &table->entries[i];
+        if (!IS_NIL(entry->value))
+        {
+            printf("Key: %s\n", entry->key->chars);
+            printf("Value: ");
+            print_value(entry->value);
+            printf("\n\n");
+        }
     }
 }

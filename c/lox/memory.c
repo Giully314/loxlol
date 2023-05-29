@@ -36,11 +36,20 @@ void free_object(Obj* obj)
     switch (obj->type)
     {
         case OBJ_STRING:
+        {
             ObjString* s = (ObjString*)obj;
             // FREE_ARRAY(char, s->chars, s->size + 1);
             // FREE(ObjString, obj);
             reallocate(s, sizeof(ObjString) + s->size + 1, 0);
             break;
+        }
+        case OBJ_FUNCTION:
+        {
+            ObjFunction* function = (ObjFunction*)obj;
+            free_chunk(&function->chunk);
+            FREE(ObjFunction, obj);
+            break;
+        }
     }
 }
 

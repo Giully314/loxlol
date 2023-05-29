@@ -37,5 +37,8 @@ bool del_hashtable(HashTable* table, ObjString* key);
 void add_all_hashtable(HashTable* from, HashTable* to);
 ObjString* find_string_hashtable(HashTable* table, const char* chars, uint32_t size, uint32_t hash);
 
+// For debug
+void print_hashtable(HashTable* table);
+
 
 #endif
